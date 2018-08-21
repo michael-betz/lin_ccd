@@ -69,6 +69,7 @@ class BaseSoC(SoCCore):
         # ADC chip
         self.submodules.adc = Adcs7476()
         self.adc.connectToPmod(platform)
+        self.comb += self.adc.i_trig.eq(1)
 
 
 def main():

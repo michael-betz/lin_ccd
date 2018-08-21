@@ -1,0 +1,40 @@
+[*]
+[*] GTKWave Analyzer v3.3.86 (w)1999-2017 BSI
+[*] Tue Aug 21 08:11:42 2018
+[*]
+[dumpfile] "/home/michael/fpga_wsp/lin_ccd/Tsl1401.vcd"
+[dumpfile_mtime] "Tue Aug 21 08:11:13 2018"
+[dumpfile_size] 99836
+[savefile] "/home/michael/fpga_wsp/lin_ccd/Tsl1401.gtkw"
+[timestart] 93660
+[size] 1255 600
+[pos] -1 -1
+*-13.000000 109975 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[sst_width] 223
+[signals_width] 212
+[sst_expanded] 1
+[sst_vpaned_height] 152
+@28
+o_SCLK
+i_trig0
+trig0
+trig1
+o_SI
+o_CLK
+i_trig1
+@24
+pixelIndex[7:0]
+@800200
+-mem
+@28
+we
+@24
+adr[6:0]
+@22
+dat_w[11:0]
+@1000200
+-mem
+@23
+tauCnt[31:0]
+[pattern_trace] 1
+[pattern_trace] 0
