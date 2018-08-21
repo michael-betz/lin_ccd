@@ -1,6 +1,7 @@
 from migen import *
 from litex.build.generic_platform import *
 from migen.fhdl.verilog import convert
+from migen.genlib.misc import timeline
 from litex.soc.interconnect.csr import *
 
 class Adcs7476(Module, AutoCSR):
@@ -15,12 +16,12 @@ class Adcs7476(Module, AutoCSR):
         # Samples
         self.o_dat = Signal(12)
         self.o_valid = Signal()         # Single cycle pulse when o_dat is valid
+        self.i_trig = Signal()          # Start a conversion (can be hardwired to 1 for continuous mode)
 
         ###
 
         self.peekReg = CSR(size=12)
-        shiftReg = Signal(16)
-        cycle = Signal(5)
+        shiftReg = Signal(12)
         self.comb += [
             self.o_SCLK.eq(ClockSignal()),
             self.peekReg.w.eq(self.o_dat)
@@ -28,16 +29,14 @@ class Adcs7476(Module, AutoCSR):
         self.sync += [
             self.o_valid.eq(0),
             shiftReg.eq(Cat(self.i_SDATA, shiftReg[:-1])),
-            cycle.eq(cycle + 1),
-            self.o_nCS.eq(1),
-            If(cycle < 16,
-                self.o_nCS.eq(0)
-            ),
-            If(cycle == 17,
-                self.o_dat.eq(shiftReg),
-                self.o_valid.eq(1),
-                cycle.eq(0)
-            )
+            timeline(self.i_trig, [
+                ( 0, [self.o_nCS.eq(0)]),
+                (15, [self.o_nCS.eq(1)]),
+                (16, [
+                    self.o_dat.eq(shiftReg),
+                    self.o_valid.eq(1)
+                ]),
+            ])
         ]
 
 
@@ -58,7 +57,13 @@ class Adcs7476(Module, AutoCSR):
 
 
 def dut_tb(dut):
+    # 5 idle clock cycles
+    for i in range(5):
+        yield
+    # Trigger ADC
+    yield dut.i_trig.eq(1)
     for i in range(1000):
+        # Clock in 0x800 as the 12 bit data word
         if i == 4:
             yield dut.i_SDATA.eq(1)
         else:

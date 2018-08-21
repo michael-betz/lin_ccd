@@ -1,0 +1,32 @@
+[*]
+[*] GTKWave Analyzer v3.3.94 (w)1999-2018 BSI
+[*] Tue Aug 21 01:08:52 2018
+[*]
+[dumpfile] "/home/michael/fpga_wsp/lin_ccd/Adcs7476.vcd"
+[dumpfile_mtime] "Tue Aug 21 01:07:51 2018"
+[dumpfile_size] 36120
+[savefile] "/home/michael/fpga_wsp/lin_ccd/Adcs7476.gtkw"
+[timestart] 0
+[size] 1690 600
+[pos] -1 -1
+*-8.000000 825 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[sst_width] 216
+[signals_width] 142
+[sst_expanded] 1
+[sst_vpaned_height] 154
+@28
+o_SCLK
+i_trig
+@23
+counter[4:0]
+@28
+o_nCS
+i_SDATA
+@22
+shiftReg[11:0]
+@28
+o_valid
+@22
+o_dat[11:0]
+[pattern_trace] 1
+[pattern_trace] 0
