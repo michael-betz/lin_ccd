@@ -1,5 +1,6 @@
 from migen import *
 from migen.fhdl.verilog import convert
+from litex.build.generic_platform import *
 from litex.soc.interconnect.wishbone import SRAM, Interface
 from litex.soc.interconnect.csr import *
 from Adcs7476 import Adcs7476
@@ -56,6 +57,17 @@ class Tsl1401(Module, AutoCSR):
             })
         ]
 
+    def connectToCmod(self, platform):
+        self.adc.connectToPmod(platform)
+        platform.add_extension([("TSL", 0,
+            Subsignal("CLK", Pins("GPIO:PIO1"), IOStandard("LVCMOS33")),
+            Subsignal("SI",  Pins("GPIO:PIO2"), IOStandard("LVCMOS33"))
+        )])
+        r = platform.request("TSL")
+        self.comb += [
+            r.CLK.eq(self.o_CLK),
+            r.SI.eq(self.o_SI)
+        ]
 
 
 def dut_tb(dut):

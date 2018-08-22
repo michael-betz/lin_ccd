@@ -17,10 +17,11 @@ config: $(TOP_BIT)
 
 test:
 	-pkill litex_server*
-	litex_server uart /dev/ttyUSB1&
-	ipython -i test.py
+	litex_server uart /dev/ttyUSB1 1000000&
+	ipython --pylab -i test.py
 
 clean:
 	rm -rf $(BUILD_FOLDER)
+	rm -f *.vcd
 
 .PHONY: clean lib load test all
