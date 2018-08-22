@@ -22,7 +22,8 @@ class Tsl1401(Module, AutoCSR):
         self.submodules.adc = Adcs7476()
         mem = Memory(12, 128)
         p = mem.get_port(write_capable=True)
-        # self.submodules.sram = SRAM(mem, read_only=True, bus=self.b_wishbone)
+        self.specials += p
+        self.submodules.sram = SRAM(mem, read_only=True, bus=self.b_wishbone)
 
         pixelIndex = Signal(8)
         self.comb += [

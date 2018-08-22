@@ -7,6 +7,7 @@ from litex.soc.integration.builder import *
 from litex.soc.cores import dna, xadc, gpio
 from litex.soc.cores.uart import UARTWishboneBridge
 from Adcs7476 import Adcs7476
+from Tsl1401 import Tsl1401
 
 
 class BaseSoC(SoCCore):
@@ -66,8 +67,13 @@ class BaseSoC(SoCCore):
         user_buttons = Cat(*[platform.request("user_btn", i) for i in range(2)])
         self.submodules.buttons = gpio.GPIOIn(user_buttons)
 
-        # ADC chip
-        self.submodules.adc = Adcs7476()
+        # # ADC chip
+        # self.submodules.adc = Adcs7476()
+        # self.adc.connectToPmod(platform)
+        # self.comb += self.adc.i_trig.eq(1)
+
+        # CCD chip
+        self.submodules.ccd = Tsl1401()
         self.adc.connectToPmod(platform)
         self.comb += self.adc.i_trig.eq(1)
 
@@ -85,3 +91,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
