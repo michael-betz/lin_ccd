@@ -17,7 +17,7 @@ config: $(TOP_BIT)
 
 test:
 	-pkill litex_server*
-	litex_server uart /dev/ttyUSB1 1000000&
+	litex_server uart /dev/ttyUSB1 115200&
 	ipython --pylab -i test.py
 
 clean:

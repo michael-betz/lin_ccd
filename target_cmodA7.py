@@ -4,9 +4,11 @@ from litex.boards.platforms import cmod_a7
 from litex.build.generic_platform import *
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
-from litex.soc.cores import dna, xadc, gpio
+from litex.soc.cores import dna, xadc, gpio, uart
+from litex.soc.interconnect.wishbone import SRAM
 from migen.genlib.resetsync import AsyncResetSynchronizer
 from litex.soc.cores.uart import UARTWishboneBridge
+from UartMemoryDumper import *
 from Adcs7476 import Adcs7476
 from Tsl1401 import Tsl1401
 
@@ -15,11 +17,15 @@ class BaseSoC(SoCCore):
     # Peripherals CSR declaration
     csr_peripherals = [
         # "adc"
-        "ccd"
+        "ccd",
+        "ccd_mem",
+        "mem_dump_mem",
+        "mem_dump"
     ]
     sInd = max(SoCCore.csr_map.values()) + 1
     for v, name in enumerate(csr_peripherals, start=sInd):
         SoCCore.csr_map[name] = v
+    print(SoCCore.csr_map)
 
     def __init__(self, **kwargs):
         print("BaseSoC:", kwargs)
@@ -27,7 +33,7 @@ class BaseSoC(SoCCore):
         platform.add_source("./xilinx7_clocks.v")
 
         self.clock_domains.cd_sys = ClockDomain()   #  20 MHz
-        sys_clk_freq = 20 * 1000000
+        sys_clk_freq = 10 * 1000000
         self.clock_domains.cd_fast = ClockDomain()  # 100 MHz
         pll_locked = Signal()
         self.specials += [
@@ -37,7 +43,7 @@ class BaseSoC(SoCCore):
                 p_MULT=50,
                 i_reset=platform.request("user_btn",0),
                 i_sysclk_p=platform.request("clk12"),
-                p_DIV0=30,
+                p_DIV0=60,
                 o_clk_out0=self.cd_sys.clk,
                 p_DIV1=6,
                 o_clk_out1=self.cd_fast.clk,
@@ -47,7 +53,7 @@ class BaseSoC(SoCCore):
             AsyncResetSynchronizer(self.cd_fast,~pll_locked)
         ]
 
-        # SoC init (No CPU, we controlling the SoC with UART)
+        # SoC init (No CPU, we controlling stuff from python)
         SoCCore.__init__(
             self, platform, sys_clk_freq,
             cpu_type=None,
@@ -59,29 +65,45 @@ class BaseSoC(SoCCore):
             **kwargs
         )
 
-        # No CPU, use Serial to control Wishbone bus
-        self.add_cpu_or_bridge(
-            UARTWishboneBridge(
-                platform.request("serial"),
-                sys_clk_freq,
-                baudrate=1000000
-            )
-        )
+        #----------------------------
+        # Serial to Wishbone bridge
+        #----------------------------
+        self.add_cpu_or_bridge(UARTWishboneBridge(
+            platform.request("serial"),
+            sys_clk_freq,
+            baudrate=115200
+        ))
         self.add_wb_master(self.cpu_or_bridge.wishbone)
 
-        # # ADC chip
-        # self.submodules.adc = Adcs7476()
-        # self.adc.connectToPmod(platform)
-        # self.comb += self.adc.i_trig.eq(1)
+        #----------------------------
+        # Shared memory for CCD data
+        #----------------------------
+        mem = Memory(16, 128)
+        self.specials += mem
+        self.submodules.ccd_ram = SRAM(mem, read_only=True)
+        self.register_mem("ccd", 0x50000000, self.ccd_ram.bus, 128)
 
+        #----------------------------
         # CCD module (includes ADC)
-        self.submodules.ccd = Tsl1401()
+        #----------------------------
+        self.submodules.ccd = Tsl1401(mem)
         self.ccd.connectToCmod(platform)
+
+        #----------------------------
+        # Serial memory dumper
+        #----------------------------
+        platform.add_extension([("serial", 1,
+            Subsignal("tx", Pins("GPIO:PIO3"), IOStandard("LVCMOS33"))
+        )])
+        self.submodules.mem_dump = UartMemoryDumper(
+            platform.request("serial", 1), mem, sys_clk_freq, baudrate=115200
+        )
+
         self.comb += [
-            self.ccd.i_trig.eq(~self.platform.request("user_btn",1)),
-            platform.request("user_led", 1).eq(self.ccd.adc.i_trig)
+            self.ccd.i_trig.eq(~self.platform.request("user_btn", 1)),
+            platform.request("user_led", 1).eq(self.ccd.adc.i_trig),
+            self.mem_dump.i_trig.eq(1)
         ]
-        self.register_mem("ccd", 0x50000000, self.ccd.b_wishbone, 128)
 
 
 def main():

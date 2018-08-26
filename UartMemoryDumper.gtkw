@@ -1,0 +1,33 @@
+[*]
+[*] GTKWave Analyzer v3.3.86 (w)1999-2017 BSI
+[*] Sun Aug 26 03:48:23 2018
+[*]
+[dumpfile] "/home/michael/fpga_wsp/lin_ccd/UartMemoryDumper.vcd"
+[dumpfile_mtime] "Sun Aug 26 03:47:45 2018"
+[dumpfile_size] 23536
+[savefile] "/home/michael/fpga_wsp/lin_ccd/UartMemoryDumper.gtkw"
+[timestart] 0
+[size] 1533 845
+[pos] -1 -1
+*-12.000000 8000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[sst_width] 301
+[signals_width] 324
+[sst_expanded] 1
+[sst_vpaned_height] 238
+@28
+sys_clk
+i_trig
+o_done
+@22
+byteInd[1:0]
+adr[1:0]
+dat_r[15:0]
+@820
+state[31:0]
+@28
+sink_ready
+sink_valid
+@22
+sink_payload_data[7:0]
+[pattern_trace] 1
+[pattern_trace] 0

@@ -30,12 +30,15 @@ class Adcs7476(Module, AutoCSR):
             self.o_valid.eq(0),
             shiftReg.eq(Cat(self.i_SDATA, shiftReg[:-1])),
             timeline(self.i_trig, [
-                ( 0, [self.o_nCS.eq(0)]),
-                (15, [self.o_nCS.eq(1)]),
+                ( 0, [
+                    self.o_nCS.eq(0),
+                    shiftReg.eq(0)
+                ]),
                 (16, [
+                    self.o_nCS.eq(1),
                     self.o_dat.eq(shiftReg),
                     self.o_valid.eq(1)
-                ]),
+                ])
             ])
         ]
 

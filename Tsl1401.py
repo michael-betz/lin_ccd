@@ -1,19 +1,17 @@
 from migen import *
 from migen.fhdl.verilog import convert
 from litex.build.generic_platform import *
-from litex.soc.interconnect.wishbone import SRAM, Interface
 from litex.soc.interconnect.csr import *
 from Adcs7476 import Adcs7476
 
 
 class Tsl1401(Module, AutoCSR):
     ''' expected to run on a 20 MHz clock '''
-    def __init__(self):
+    def __init__(self, mem):
         self.i_tau = CSRStorage(32, reset=128)  # Integration cycles
-        self.i_trig = Signal()
+        self.i_trig = Signal()                  # Trigger an acquisition
         self.o_CLK = Signal()
         self.o_SI = Signal()
-        self.b_wishbone = Interface()
 
         ###
 
@@ -21,15 +19,13 @@ class Tsl1401(Module, AutoCSR):
         trig0 = Signal()
         trig1 = Signal()
         self.submodules.adc = Adcs7476()
-        mem = Memory(12, 128)
-        p = mem.get_port(write_capable=True)
-        self.specials += p
-        self.submodules.sram = SRAM(mem, read_only=True, bus=self.b_wishbone)
 
         pixelIndex = Signal(8)
+        self.specials.p = p = mem.get_port(write_capable=True)
         self.comb += [
             p.adr.eq(pixelIndex-1),
             p.dat_w.eq(self.adc.o_dat),
+            # p.dat_w.eq(pixelIndex-1),
             p.we.eq(self.adc.o_valid),
             self.o_CLK.eq(self.adc.o_valid | trig1),
             trig0.eq(self.i_trig & (pixelIndex == 0)),
@@ -77,6 +73,7 @@ def dut_tb(dut):
     # Trigger ADC
     yield dut.i_trig.eq(1)
     yield
+    yield dut.i_trig.eq(0)
     for i in range(2500):
         if i == 4:
             # yield dut.i_trig.eq(0)
@@ -85,12 +82,17 @@ def dut_tb(dut):
             yield dut.adc.i_SDATA.eq(0)
         yield
 
+def getDut():
+    mem = Memory(12, 128)
+    dut = Tsl1401(mem)
+    dut.specials += mem
+    return dut
 
 def main():
     fName = __file__[:-3]
-    dut = Tsl1401()
+    dut = getDut()
     convert(dut, ios={dut.i_trig, dut.o_CLK, dut.o_SI}).write(fName + ".v")
-    dut = Tsl1401()
+    dut = getDut()
     run_simulation(dut, dut_tb(dut), vcd_name=fName+".vcd", clocks={"sys": 50} )
 
 if __name__ == '__main__':
