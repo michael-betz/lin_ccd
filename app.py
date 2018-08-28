@@ -8,14 +8,14 @@ from litex.soc.tools.remote import RemoteClient
 from time import sleep
 from numpy import *
 from matplotlib.pyplot import *
-from matplotlib.animation import FuncAnimation
 import threading
 import argparse
 from subprocess import Popen, call
 from serial import Serial
 import atexit
 
-rollBuffer = zeros((1024,128), dtype=float)
+rollBuffer = zeros((1024, 128), dtype=float)
+
 
 def main():
     global runThread, readData
@@ -59,10 +59,10 @@ def main():
     xdata = arange(128)
     ydata = zeros(128)
     ydata[1] = 4096
-    fig, axs = subplots(2,1, figsize=(10,6))
+    fig, axs = subplots(2, 1, figsize=(10, 6))
     i = axs[0].imshow(
         rollBuffer.transpose(),
-        vmin=0, vmax=2**12-1,
+        vmin=0, vmax=2**12 - 1,
         aspect="equal",
         animated=True,
         # cmap="gnuplot2"
@@ -97,6 +97,7 @@ def main():
     atexit.register(serial.close)
     threading.Thread(target=read_from_port).start()
     show()
+
 
 if __name__ == '__main__':
     main()
