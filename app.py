@@ -15,6 +15,7 @@ from subprocess import Popen, call
 from serial import Serial
 import atexit
 
+rollBuffer = zeros((1024,128), dtype=float)
 
 def main():
     global runThread, readData
@@ -58,8 +59,16 @@ def main():
     xdata = arange(128)
     ydata = zeros(128)
     ydata[1] = 4096
-    fig, ax = subplots()
-    l, = ax.plot(xdata, ydata, "-o")
+    fig, axs = subplots(2,1, figsize=(10,6))
+    i = axs[0].imshow(
+        rollBuffer.transpose(),
+        vmin=0, vmax=2**12-1,
+        aspect="equal",
+        animated=True,
+        # cmap="gnuplot2"
+    )
+    l, = axs[1].plot(xdata, ydata, "-o")
+    fig.tight_layout()
     axfreq = axes([0.13, 0.9, 0.7, 0.05])
     sfreq = Slider(axfreq, 'Tau [ms]', 0.01, 100, valinit=get_tau())
     sfreq.on_changed(set_tau)
@@ -71,12 +80,17 @@ def main():
         int(args.br_dump / fclk * 2**32)
     )
     serial = Serial(args.tty_dump, args.br_dump)
+
     def read_from_port():
+        global rollBuffer
         while serial.isOpen():
             serial.read_until(b"\x42")
             buf = serial.read(256)
             readData = fromstring(buf, dtype=">u2")
+            rollBuffer = roll(rollBuffer, 1, 0)
+            rollBuffer[0, :] = readData
             l.set_ydata(readData)
+            i.set_array(rollBuffer.transpose())
             fig.canvas.draw_idle()
             # print("*", end="", flush=True)
 

@@ -56,8 +56,8 @@ class Tsl1401(Module, AutoCSR):
     def connectToCmod(self, platform):
         self.adc.connectToPmod(platform)
         platform.add_extension([("TSL", 0,
-            Subsignal("CLK", Pins("GPIO:PIO1"), IOStandard("LVCMOS33")),
-            Subsignal("SI",  Pins("GPIO:PIO2"), IOStandard("LVCMOS33"))
+            Subsignal("CLK", Pins("M3"), IOStandard("LVCMOS33")),
+            Subsignal("SI",  Pins("L3"), IOStandard("LVCMOS33"))
         )])
         r = platform.request("TSL")
         self.comb += [

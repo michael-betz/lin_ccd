@@ -93,7 +93,7 @@ class BaseSoC(SoCCore):
         # Serial memory dumper
         #----------------------------
         platform.add_extension([("serial", 1,
-            Subsignal("tx", Pins("GPIO:PIO3"), IOStandard("LVCMOS33"))
+            Subsignal("tx", Pins("A16"), IOStandard("LVCMOS33"))
         )])
         self.submodules.mem_dump = UartMemoryDumper(
             platform.request("serial", 1), mem, sys_clk_freq, baudrate=115200
