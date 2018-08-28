@@ -18,14 +18,12 @@ rollBuffer = zeros((1024, 128), dtype=float)
 
 
 def main():
-    global runThread, readData
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tty_ctrl", default="/dev/ttyUSB1", help="UartWishboneBridge for control")
     parser.add_argument("--tty_dump", default="/dev/ttyUSB2", help="UartMemoryDumper for data")
     parser.add_argument("--br_ctrl", default=115200, type=int, help="UartWishboneBridge baudrate")
     parser.add_argument("--br_dump", default=115200, type=int, help="UartMemoryDumper baudrate")
     args = parser.parse_args()
-    print(args)
 
     #----------------------------------------------
     # Setup litex_server
@@ -44,31 +42,26 @@ def main():
     def get_tau():
         intVal = wishbone.regs.ccd_i_tau.read()
         tau = intVal / fclk / 1e-3
-        print("get_tau:", intVal, tau)
         return tau
 
     def set_tau(tau):
         intVal = int(tau * 1e-3 * fclk)
         wishbone.regs.ccd_i_tau.write(intVal)
 
-    def update_plot(frame):
-        print("u", end="", flush=True)
-        l.set_ydata(readData)
-        return l
-
-    xdata = arange(128)
-    ydata = zeros(128)
-    ydata[1] = 4096
     fig, axs = subplots(2, 1, figsize=(10, 6))
+    # Rolling image
     i = axs[0].imshow(
         rollBuffer.transpose(),
-        vmin=0, vmax=2**12 - 1,
+        vmin=0, vmax=4095,
         aspect="equal",
         animated=True,
         # cmap="gnuplot2"
     )
-    l, = axs[1].plot(xdata, ydata, "-o")
+    # Line plot
+    l, = axs[1].plot(arange(128), zeros(128), "-o")
+    axs[1].axis((-1, 128, -1, 4096))
     fig.tight_layout()
+    # GUI slider
     axfreq = axes([0.13, 0.9, 0.7, 0.05])
     sfreq = Slider(axfreq, 'Tau [ms]', 0.01, 100, valinit=get_tau())
     sfreq.on_changed(set_tau)
