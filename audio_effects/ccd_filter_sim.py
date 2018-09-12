@@ -6,51 +6,11 @@
 
 import argparse
 from numpy import *
-import scipy.signal
 from PIL import Image
 import soundfile as sf
 import pyaudio
+from FIR import FIR
 
-class FIR(object):
-    """ helper class for simple real time FIR filters """
-
-    def __init__(self, coeffs=ones(128)):
-        self.coeffs = coeffs / sum(coeffs)
-        self.X = zeros_like(coeffs)
-        self.M = coeffs.size              # Number of FIR coefficients
-        self.scratch = zeros(self.M - 1)  # For overlap save algo.
-
-    def setCoeffs(self, row):
-        """ row is one line of pixels from an image / CCD """
-        if row.size != self.M:
-            raise ValueError("Invalid size of row")
-        # Normalize amplitudes for maximum effect
-        row -= amin(row)
-        row /= amax(row)
-        # Get impulse response
-        h_t = fft.irfft(row)
-        # Truncate and window impulse response
-        # according to http://www.dspguide.com/ch17/1.htm
-        h_t = roll(h_t, h_t.size // 2)
-        trunc_start = h_t.size // 2 - self.M // 2
-        trunc_stop = h_t.size // 2 + self.M // 2
-        h_t = h_t[trunc_start: trunc_stop]
-        h_t *= hamming(h_t.size)
-        self.coeffs[:] = h_t
-
-    def filt(self, xIn):
-        """ process a single sample (very slow!) """
-        self.X[:] = roll(self.X, 1)
-        self.X[0] = xIn
-        return sum(self.X * self.coeffs)
-
-    def filtChunk(self, xIn):
-        """ process a chunk of samples """
-        res = scipy.signal.convolve(
-            hstack((self.scratch, xIn)), self.coeffs, mode="valid"
-        )
-        self.scratch[:] = xIn[-self.scratch.size:]
-        return res
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
