@@ -1,9 +1,8 @@
 """
     Play back an audio file and filter it in real time.
     The frequency response is changed during playback according to the brightness
-    of a linear CCD sensor
-    Needs 2 Uarts. One for the WishboneUart bridge for control and a
-    second one for the UartMemoryDumper.
+    of a linear CCD sensor.
+    Sensor data come in through UART
 """
 
 import argparse
