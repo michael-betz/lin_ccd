@@ -19,16 +19,18 @@ def main():
     parser.add_argument("--freq_file", help="File with a list of frequencies to map to the CCD pixels. Falls back on a pentatonic scale")
     parser.add_argument("--base_freq", default=25, type=float, help="Pentatonic scale: fundamental frequency in Hz")
     parser.add_argument("--n_octaves", default=7, type=int, help="Pentatonic scale: number of octaves")
+    parser.add_argument("--ch_width", default=2, type=int, help="Bytes per sample")
     args = parser.parse_args()
 
     #----------------------------------
     # Setup pyaudio, write audio stream
     #----------------------------------
     F_SAMPLE = 44100
+    CH_WIDTH = args.ch_width
     p = pyaudio.PyAudio()
     # 16 bit per channel, and 1 channel audio
     stream = p.open(
-        format=p.get_format_from_width(2, False),    # Always signed
+        format=p.get_format_from_width(CH_WIDTH, False),    # Always signed
         channels=1,
         rate=F_SAMPLE,
         output=True
@@ -53,15 +55,21 @@ def main():
     amps = zeros_like(freq)             # Tone amplitude
     phs = zeros_like(freq)              # Tone initial phase
     # phs = 2 * pi * (random.rand(freq.size) * 2 - 1)
+    W = 2**((CH_WIDTH * 8) - 1)
 
     def audioPlayer():
-        chunk = arange(32)  # How many samples to generate per iteration
+        chunk = arange(64)  # How many samples to generate per iteration
         iSample = 1         # Sample index
         omega_v, chunk_v = meshgrid(omega, chunk)
+        minValue = maxValue = 0
         while True:
             dats = amps * sin(omega_v * (iSample + chunk_v) + phs)
             samples = mean(dats, 1)
-            stream.write((samples * 2**15).astype(int16).tostring())
+            maxValue = amax(hstack((maxValue, samples)))
+            minValue = amin(hstack((minValue, samples)))
+            print(minValue, maxValue)
+            samples_bytes = (samples * (W - 1)).astype('<i{}'.format(CH_WIDTH))
+            stream.write(samples_bytes.tobytes())
             iSample += chunk.size
     threading.Thread(target=audioPlayer).start()
 
